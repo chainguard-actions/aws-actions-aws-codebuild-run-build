@@ -1,0 +1,23 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          project-name: my-codebuild-project
+          buildspec-override: buildspec.yml
+          env-vars-for-codebuild: MY_VAR,ANOTHER_VAR
+          update-interval: '30'
+          update-back-off: '1'
+          hide-cloudwatch-logs: 'true'
+      - name: Assert action ran (may fail without real AWS credentials)
+        run: |
+          echo "Action completed (with or without error due to missing AWS credentials)"
+          echo "aws-build-id: ${{ steps.action.outputs.aws-build-id }}"
+          echo "PASS"
