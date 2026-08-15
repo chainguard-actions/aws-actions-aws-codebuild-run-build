@@ -1,4 +1,4 @@
-name: Test basic usage - missing credentials error
+name: Test disable-github-env-vars and source-version-override
 on:
   workflow_dispatch:
 jobs:
@@ -10,12 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run action (expect failure due to missing AWS credentials)
+      - name: Run action with disable-github-env-vars (expect failure due to missing AWS credentials)
         id: action
         uses: .
         continue-on-error: true
         with:
           project-name: test-project
+          disable-github-env-vars: 'true'
+          source-version-override: 'refs/heads/main'
         env:
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE

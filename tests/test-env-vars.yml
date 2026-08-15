@@ -1,21 +1,24 @@
-name: Test basic usage - missing credentials error
+name: Test env-vars-for-codebuild input
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_REF: refs/heads/main
+      GITHUB_REF: refs/heads/feature-branch
       GITHUB_EVENT_NAME: push
+      MY_CUSTOM_VAR: hello-world
+      ANOTHER_VAR: test-value
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run action (expect failure due to missing AWS credentials)
+      - name: Run action with env-vars-for-codebuild (expect failure due to missing AWS credentials)
         id: action
         uses: .
         continue-on-error: true
         with:
           project-name: test-project
+          env-vars-for-codebuild: MY_CUSTOM_VAR,ANOTHER_VAR
         env:
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE

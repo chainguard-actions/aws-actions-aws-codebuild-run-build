@@ -1,4 +1,4 @@
-name: Test override inputs
+name: Test buildspec and source overrides
 on:
   workflow_dispatch:
 jobs:
@@ -9,29 +9,31 @@ jobs:
       GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+
+      - name: Run action with overrides (expect failure due to missing AWS credentials)
+        id: action
         uses: .
         continue-on-error: true
         with:
-          project-name: my-codebuild-project
+          project-name: test-project
+          buildspec-override: buildspec-custom.yml
           compute-type-override: BUILD_GENERAL1_SMALL
           environment-type-override: LINUX_CONTAINER
           image-override: aws/codebuild/standard:5.0
-          image-pull-credentials-type-override: CODEBUILD
-          disable-source-override: "true"
-          source-version-override: main
+          disable-source-override: 'false'
+          hide-cloudwatch-logs: 'true'
         env:
-          AWS_ACCESS_KEY_ID: fake-key-id
-          AWS_SECRET_ACCESS_KEY: fake-secret-key
           AWS_DEFAULT_REGION: us-east-1
-      - name: Assert action ran (may fail due to no real AWS credentials)
+          AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+          AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+      - name: Assert action failed (no real AWS credentials)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action executed (outcome=$OUTCOME)"
-          else
-            echo "FAIL: unexpected outcome '$OUTCOME'"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail without real AWS credentials, got '$OUTCOME'"
             exit 1
           fi
+          echo "PASS: action correctly failed without real AWS credentials"
