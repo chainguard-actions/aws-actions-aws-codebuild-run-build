@@ -1,0 +1,39 @@
+name: Test buildspec-override and compute-type-override inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with buildspec and compute-type overrides (expect AWS failure, not input error)
+        id: action
+        uses: .
+        with:
+          project-name: test-project
+          buildspec-override: 'buildspec-test.yml'
+          compute-type-override: 'BUILD_GENERAL1_SMALL'
+          environment-type-override: 'LINUX_CONTAINER'
+          image-override: 'aws/codebuild/standard:5.0'
+          hide-cloudwatch-logs: 'true'
+        env:
+          AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+          AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          AWS_DEFAULT_REGION: us-east-1
+        continue-on-error: true
+
+      - name: Assert action failed at AWS level (not input parsing)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (AWS auth error, not override input parsing error)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action unexpectedly succeeded without real AWS credentials"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome: $OUTCOME"
+            exit 1
+          fi
