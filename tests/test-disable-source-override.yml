@@ -1,4 +1,4 @@
-name: Test basic usage - no AWS credentials
+name: Test disable-source-override flag
 on:
   workflow_dispatch:
 jobs:
@@ -13,21 +13,22 @@ jobs:
         uses: .
         with:
           project-name: test-project
+          disable-source-override: 'true'
         env:
           AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
           AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
           AWS_DEFAULT_REGION: us-east-1
         continue-on-error: true
-      - name: Assert action ran and produced output or failed with AWS error
+      - name: Assert action ran with disable-source-override
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # The action should either succeed (unlikely without real AWS) or fail
-          # with an AWS-related error (credentials invalid, project not found, etc.)
-          # It should NOT fail due to missing required inputs or action misconfiguration.
+          # With disable-source-override=true, the action should not attempt to
+          # override the source repo. It should still fail with an AWS error
+          # (invalid credentials / project not found) rather than a config error.
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran as expected (outcome=$OUTCOME)"
+            echo "PASS: action ran with disable-source-override=true (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

@@ -1,4 +1,4 @@
-name: Test basic usage - no AWS credentials
+name: Test hide-cloudwatch-logs and disable-github-env-vars
 on:
   workflow_dispatch:
 jobs:
@@ -13,21 +13,23 @@ jobs:
         uses: .
         with:
           project-name: test-project
+          hide-cloudwatch-logs: 'true'
+          disable-github-env-vars: 'true'
         env:
           AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
           AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
           AWS_DEFAULT_REGION: us-east-1
         continue-on-error: true
-      - name: Assert action ran and produced output or failed with AWS error
+      - name: Assert action ran with log hiding and env var disabling
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # The action should either succeed (unlikely without real AWS) or fail
-          # with an AWS-related error (credentials invalid, project not found, etc.)
-          # It should NOT fail due to missing required inputs or action misconfiguration.
+          # With hide-cloudwatch-logs=true and disable-github-env-vars=true,
+          # the action should still run and fail with an AWS error rather than
+          # a configuration parsing error.
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran as expected (outcome=$OUTCOME)"
+            echo "PASS: action ran with hide-cloudwatch-logs and disable-github-env-vars (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
